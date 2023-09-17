@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/chat-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/customer-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/data-connector/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gRPC-shared/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gRPC-shared/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gRPC-sharing/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/gRPC-sharing/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/inventory-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/k-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/order-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/product-catalog/src/main/java" charset="UTF-8" />
+  </component>
+</project>

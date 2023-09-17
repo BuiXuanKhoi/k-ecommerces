@@ -1,0 +1,5 @@
+
+k
+java:S2095"UUse try-with-resources or close this "ElasticsearchRestClient" in a "finally" clause.(¤ºÐá
+V
+java:S1874";Remove this use of "RestHighLevelClient"; it is deprecated.(’ŽºÊþÿÿÿÿ

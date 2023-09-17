@@ -1,0 +1,228 @@
+version: '3'
+
+networks:
+  k-host-network:
+    driver: host
+  k-ecommerce-network:
+    external: true
+
+services:
+#
+  gateway :
+    image: k-gateway
+    container_name: k-gateway-container
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      CHAT_SERVICE_GRPC_PORT: 8088
+      CHAT_SERVICE_PORT: 8083
+      CUSTOMER_SERVICE_GRPC_PORT: 8085
+      CUSTOMER_SERVICE_PORT: 8084
+      GATE_WAY_PORT: 8080
+      INVENTORY_SERVICE_GRPC_PORT: 8086
+      INVENTORY_SERVICE_PORT: 8081
+      ORDER_SERVICE_GRPC_PORT: 8087
+      ORDER_SERVICE_PORT: 8082
+#
+#  customer-service:
+#    ports:
+#      - "8084:8084"
+#    environment:
+#      CHAT_SERVICE_GRPC_PORT: 8088
+#      CHAT_SERVICE_PORT: 8083
+#      CUSTOMER_SERVICE_GRPC_PORT: 8085
+#      CUSTOMER_SERVICE_PORT: 8084
+#      GATE_WAY_PORT: 8080
+#      INVENTORY_SERVICE_GRPC_PORT: 8086
+#      INVENTORY_SERVICE_PORT: 8081
+#      ORDER_SERVICE_GRPC_PORT: 8087
+#      ORDER_SERVICE_PORT: 8082
+#
+  inventory-service:
+    image: inventory-image
+    ports:
+      - "8081:8081"
+    environment:
+      POSTGRES_HOST : db
+      POSTGRES_PORT : 5432
+
+      CHAT_SERVICE_GRPC_PORT: 8088
+      CHAT_SERVICE_PORT: 8083
+      CUSTOMER_SERVICE_GRPC_PORT: 8085
+      CUSTOMER_SERVICE_PORT: 8084
+      GATE_WAY_PORT: 8080
+      INVENTORY_SERVICE_GRPC_PORT: 8086
+      INVENTORY_SERVICE_PORT: 8081
+      ORDER_SERVICE_GRPC_PORT: 8087
+      ORDER_SERVICE_PORT: 8082
+    depends_on:
+      - db
+
+#  order-service:
+#    ports:
+#      - "8082:8082"
+#    environment:
+#      CHAT_SERVICE_GRPC_PORT: 8088
+#      CHAT_SERVICE_PORT: 8083
+#      CUSTOMER_SERVICE_GRPC_PORT: 8085
+#      CUSTOMER_SERVICE_PORT: 8084
+#      GATE_WAY_PORT: 8080
+#      INVENTORY_SERVICE_GRPC_PORT: 8086
+#      INVENTORY_SERVICE_PORT: 8081
+#      ORDER_SERVICE_GRPC_PORT: 8087
+#      ORDER_SERVICE_PORT: 8082
+#
+#  chat-service:
+#    ports:
+#      - "8083:8083"
+#    environment:
+#      CHAT_SERVICE_GRPC_PORT: 8088
+#      CHAT_SERVICE_PORT: 8083
+#      CUSTOMER_SERVICE_GRPC_PORT: 8085
+#      CUSTOMER_SERVICE_PORT: 8084
+#      GATE_WAY_PORT: 8080
+#      INVENTORY_SERVICE_GRPC_PORT: 8086
+#      INVENTORY_SERVICE_PORT: 8081
+#      ORDER_SERVICE_GRPC_PORT: 8087
+#      ORDER_SERVICE_PORT: 8082
+
+
+  elastic-search:
+    image : docker.elastic.co/elasticsearch/elasticsearch:7.11.1
+    container_name: k-ecommerce-elasticsearch
+    expose:
+      - "9200"
+      - "9300"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+
+    networks:
+      - k-ecommerce-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.11.0
+    container_name: k-ecommerce-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://k-ecommerce-elasticsearch:9200
+    networks:
+      - k-ecommerce-network
+    depends_on:
+      - elastic-search
+
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: k-ecommerce-inventory
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - k-ecommerce-network
+
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: k-ecommerce-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT : 2181
+      ZOOKEEPER_TICK_TIME : 2000
+
+
+  broker:
+    image : confluentinc/cp-kafka:latest
+    hostname: k-ecommerce-broker
+    container_name: k-ecommerce-broker
+    ports:
+      - "9092:9092"
+
+    depends_on:
+      - zookeeper
+
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'localhost:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+
+
+  connector :
+    image : confluentinc/cp-kafka-connect:lastest
+    container_name: k-ecommerce-connector
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'pkc-921jm.us-east-2.aws.confluent.cloud:9092'
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: "[%d] %p %X{connector.context}%m (%c:%L)%n"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+#    volumes:
+#      - D:\\kafka\bin\windows\connect-standalone.bat
+#      - D:\\kafka\config\connect-standalone.properties:/etc/kafka/connect-standalone.properties
+#      - D:\\kafka\config\postgre-connector.properties:etc/kafka/postgre-connector.properties
+#    command:
+#      - bash
+#        - -c
+#        - |
+#        echo "Installing Connector"
+#        confluent-hub install --no-prompt debezium/debezium-connector-postgre:1.7.0
+#        confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:11.1.3
+#        confluent-hub install --no-prompt neo4j/kafka-connect-neo4j:2.0.0
+#        #
+#        echo "Launching Kafka Connect worker"
+#        /etc/confluent/docker/run &
+#        #
+#        sleep infinity
+
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    container_name: k-ecommerce-schema-registry
+    ports:
+      - "8091:8081"
+    depends_on:
+      - broker
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+      SCHEMA_REGISTRY_HOST_NAME: localhost
+      SCHEMA_REGISTRY_LISTENERS: localhost:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://localhost:19092
+      SCHEMA_REGISTRY_DEBUG: 'true'
+
+#  control-center:
+#    image: confluentinc/cp-enterprise-control-center:5.0.0
+#    container_name: k-confluent-container
+#    depends_on:
+#      - broker
+#      - zookeeper
+#    ports:
+#      - "9021:9021"
+#    environment:
+#      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'localhost:9092'
+#      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'localhost:2181'
+#      CONTROL_CENTER_REPLICATION_FACTOR: 1
+#      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+#      PORT: 9021
+
+
+
+

@@ -1,0 +1,9 @@
+
+™
+java:S1130"wRemove the declaration of thrown exception 'java.lang.InterruptedException', as it cannot be thrown from method's body.(àÒşüøÿÿÿÿ8¯¨ÄÆ¢1
+Z	java:S106"9Replace this use of System.out or System.err by a logger.(¤š¨ƒøÿÿÿÿ8ò‡¿Æ¢1
+Z	java:S106"9Replace this use of System.out or System.err by a logger.(‹ÿïÚÿÿÿÿÿ8ö‡¿Æ¢1
+|
+java:S1128	"fRemove this unused import 'org.springframework.boot.web.servlet.support.SpringBootServletInitializer'.(“²ş÷
+
+java:S1128"uRemove this unused import 'org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories'.(èÆŒ½úÿÿÿÿ
